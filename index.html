@@ -2,136 +2,251 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Absen & Nilai SDN BUNULREJO 6</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <script>
-    const siswa = [
-      { nama: "Aqila Putri Aprilia", nipd: 1566 },
-      { nama: "AQILA PUTRI AZARAH", nipd: 1567 },
-      { nama: "AQUINA KAYYISA ELMA MAZEA ALFARISI", nipd: 1568 },
-      { nama: "ARSYANDI IRGA PRAMULYA", nipd: 1569 },
-      { nama: "ATIKA ZAHRA RATIFA ALYA", nipd: 1570 },
-      { nama: "AZRIL RIZKY ADITYA", nipd: 1571 },
-      { nama: "CECILIA KEYZA ANATASYA", nipd: 1573 },
-      { nama: "CINTA RAHMAWATI", nipd: 1574 },
-      { nama: "DEFA INDRA PURWAKA", nipd: 1576 },
-      { nama: "Dimas Arya Putra Perdana", nipd: 1577 },
-      { nama: "HAFIZA KHAIRA LUBNA", nipd: 1581 },
-      { nama: "ILYANSYAH RIFQI ALDEBARAN", nipd: 1582 },
-      { nama: "KHAIRUNNISA SALSABILA", nipd: 1583 },
-      { nama: "Khansa Naura Azizah", nipd: 1584 },
-      { nama: "M. REYZA KURNIAWAN", nipd: 1585 },
-      { nama: "MARSYAH FARADILA ISLAMI", nipd: 1586 },
-      { nama: "RAMDHAN SATRIYO WICAKSONO", nipd: 1592 },
-      { nama: "Rayhan Zafran Al Gibran", nipd: 1593 },
-      { nama: "SAKTA MAULANA AL-MAGRIBI", nipd: 1596 },
-      { nama: "SANDYTAMA RIZKY TRI HASANANTA", nipd: 1728 },
-      { nama: "SATYA MAULANA AL-MALIKI", nipd: 1599 },
-      { nama: "ZIVANNA QATYA SYAFIRA", nipd: 1603 },
-    ];
-
-    function isiHadirSemua() {
-      document.querySelectorAll('select').forEach(select => select.value = 'Hadir');
+  <title>Absensi & Nilai Siswa</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f6f7;
     }
-
-    function loginGuru(event) {
-      event.preventDefault();
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      if (username === 'guru' && password === '1234') {
-        document.getElementById('loginPage').classList.add('hidden');
-        document.getElementById('mainPage').classList.remove('hidden');
-      } else {
-        alert('Login gagal! Username atau password salah.');
-      }
+    h1, h2 {
+      text-align: center;
     }
-
-    function logoutGuru() {
-      document.getElementById('mainPage').classList.add('hidden');
-      document.getElementById('loginPage').classList.remove('hidden');
-      document.getElementById('username').value = '';
-      document.getElementById('password').value = '';
+    .center {
+      text-align: center;
+      margin-bottom: 20px;
     }
-
-    window.onload = () => {
-      const grid = document.getElementById('gridSiswa');
-      siswa.forEach(s => {
-        const div = document.createElement('div');
-        div.className = 'p-4 border rounded-lg shadow bg-white';
-        div.innerHTML = `
-          <p class="font-bold">${s.nama}</p>
-          <p class="text-sm text-gray-600">NIPD: ${s.nipd}</p>
-          <select class="mt-2 w-full border rounded">
-            <option value="Hadir">Hadir</option>
-            <option value="Izin">Izin</option>
-            <option value="Sakit">Sakit</option>
-          </select>
-        `;
-        grid.appendChild(div);
-      });
-
-      document.getElementById("tanggal").textContent = new Date().toLocaleDateString("id-ID");
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      margin-top: 10px;
     }
-  </script>
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #e9ecef;
+    }
+    input[type="text"], select, input[type="password"] {
+      padding: 5px;
+      width: 120px;
+    }
+    .btn {
+      margin: 5px;
+      padding: 10px 15px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #0056b3;
+    }
+    #login-box {
+      max-width: 300px;
+      margin: 100px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 6px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+  </style>
 </head>
-<body class="bg-gray-100 font-sans">
-  <!-- Halaman Login -->
-  <div id="loginPage" class="min-h-screen flex items-center justify-center">
-    <form onsubmit="loginGuru(event)" class="bg-white p-8 rounded shadow-md w-full max-w-sm">
-      <h2 class="text-xl font-bold mb-4 text-center">Login Guru</h2>
-      <input id="username" type="text" placeholder="Username" class="mb-3 w-full px-3 py-2 border rounded" required>
-      <input id="password" type="password" placeholder="Password" class="mb-4 w-full px-3 py-2 border rounded" required>
-      <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">Login</button>
-    </form>
+<body>
+
+<div id="login-box" style="display: none;">
+  <h2>Login Guru</h2>
+  <input type="text" id="username" placeholder="Username"><br><br>
+  <input type="password" id="password" placeholder="Password"><br><br>
+  <button class="btn" onclick="login()">Login</button>
+</div>
+
+<div id="main-content" style="display: none;">
+  <h1>Rekap Kehadiran & Nilai Siswa</h1>
+
+  <div class="center">
+    <input type="text" id="namaInput" placeholder="Nama siswa">
+    <input type="text" id="kelasInput" placeholder="Kelas (misal 5A)">
+    <select id="bulanInput">
+      <option value="">Bulan</option>
+      <option>Januari</option><option>Februari</option><option>Maret</option>
+      <option>April</option><option>Mei</option><option>Juni</option>
+      <option>Juli</option><option>Agustus</option><option>September</option>
+      <option>Oktober</option><option>November</option><option>Desember</option>
+    </select>
+    <button class="btn" onclick="tambahSiswa()">Tambah Siswa</button>
   </div>
 
-  <!-- Halaman Utama -->
-  <div id="mainPage" class="hidden max-w-6xl mx-auto p-6">
-    <!-- Header dan Logout -->
-    <div class="flex justify-between items-center mb-6">
-      <div>
-        <h1 class="text-2xl font-bold">SDN BUNULREJO 6 Kota Malang</h1>
-        <p class="text-gray-700">Absen Harian & Daftar Nilai Interaktif</p>
-        <p class="text-sm text-gray-500">Tanggal: <span id="tanggal"></span></p>
-      </div>
-      <button onclick="logoutGuru()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Logout</button>
-    </div>
+  <div class="center">
+    Filter Kelas:
+    <select id="filterKelas" onchange="renderTabel()"></select>
 
-    <!-- Tombol Hadir Semua -->
-    <div class="bg-white p-4 rounded-lg shadow mb-6">
-      <button onclick="isiHadirSemua()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Hadir Semua</button>
-    </div>
-
-    <!-- Grid Siswa -->
-    <div id="gridSiswa" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-
-    <!-- Halaman 2 -->
-    <div class="mt-10 bg-white p-6 rounded-lg shadow">
-      <h2 class="text-xl font-bold mb-4">Rekapan Kehadiran & Nilai</h2>
-      <table class="table-auto w-full text-left border">
-        <thead class="bg-gray-200">
-          <tr>
-            <th class="border px-4 py-2">Nama</th>
-            <th class="border px-4 py-2">Harian</th>
-            <th class="border px-4 py-2">Formatif</th>
-            <th class="border px-4 py-2">STS</th>
-            <th class="border px-4 py-2">SAS</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${[...Array(22)].map((_, i) => `
-          <tr>
-            <td class="border px-4 py-2">${siswa[i]?.nama || ''}</td>
-            <td class="border px-4 py-2"><input type="number" class="w-full border rounded p-1" /></td>
-            <td class="border px-4 py-2"><input type="number" class="w-full border rounded p-1" /></td>
-            <td class="border px-4 py-2"><input type="number" class="w-full border rounded p-1" /></td>
-            <td class="border px-4 py-2"><input type="number" class="w-full border rounded p-1" /></td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-      <button onclick="window.print()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Cetak</button>
-    </div>
+    Filter Bulan:
+    <select id="filterBulan" onchange="renderTabel()"></select>
   </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Nama</th>
+        <th>Kelas</th>
+        <th>Bulan</th>
+        <th>Kehadiran</th>
+        <th>Harian</th>
+        <th>Formatif</th>
+        <th>STS</th>
+        <th>SAS</th>
+        <th>Catatan Guru</th>
+      </tr>
+    </thead>
+    <tbody id="tabel-siswa"></tbody>
+  </table>
+
+  <div class="center">
+    <button class="btn" onclick="simpan()">💾 Simpan</button>
+    <button class="btn" onclick="window.print()">🖨️ Cetak</button>
+    <button class="btn" onclick="exportExcel()">📁 Ekspor Excel</button>
+    <button class="btn" onclick="gantiPassword()">🔑 Ganti Password</button>
+    <button class="btn" onclick="logout()">🔒 Logout</button>
+  </div>
+</div>
+
+<script>
+  let defaultUser = "guru";
+  let defaultPass = "12345";
+
+  if (!localStorage.getItem("guruPass")) {
+    localStorage.setItem("guruPass", defaultPass);
+  }
+
+  function login() {
+    const user = document.getElementById("username").value;
+    const pass = document.getElementById("password").value;
+    const savedPass = localStorage.getItem("guruPass");
+
+    if (user === defaultUser && pass === savedPass) {
+      localStorage.setItem("isLogin", "true");
+      loadApp();
+    } else {
+      alert("Login gagal! Username/password salah.");
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem("isLogin");
+    location.reload();
+  }
+
+  function gantiPassword() {
+    const lama = prompt("Masukkan password lama:");
+    const baru = prompt("Masukkan password baru:");
+    const saved = localStorage.getItem("guruPass");
+
+    if (lama === saved) {
+      localStorage.setItem("guruPass", baru);
+      alert("Password berhasil diganti!");
+    } else {
+      alert("Password lama salah!");
+    }
+  }
+
+  let siswa = JSON.parse(localStorage.getItem("dataSiswa")) || [];
+
+  function tambahSiswa() {
+    const nama = document.getElementById("namaInput").value.trim();
+    const kelas = document.getElementById("kelasInput").value.trim();
+    const bulan = document.getElementById("bulanInput").value;
+    if (!nama || !kelas || !bulan) {
+      alert("Isi semua kolom!");
+      return;
+    }
+    siswa.push({ nama, kelas, bulan, kehadiran: "", harian: "", formatif: "", sts: "", sas: "", catatan: "" });
+    simpan();
+    renderTabel();
+    document.getElementById("namaInput").value = "";
+  }
+
+  function ubah(i, kolom, val) {
+    siswa[i][kolom] = val;
+  }
+
+  function simpan() {
+    localStorage.setItem("dataSiswa", JSON.stringify(siswa));
+    alert("Data disimpan.");
+  }
+
+  function exportExcel() {
+    const data = siswa.map((s, i) => ({
+      No: i + 1,
+      Nama: s.nama,
+      Kelas: s.kelas,
+      Bulan: s.bulan,
+      Kehadiran: s.kehadiran,
+      Harian: s.harian,
+      Formatif: s.formatif,
+      STS: s.sts,
+      SAS: s.sas,
+      Catatan: s.catatan
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Rekap Nilai");
+    XLSX.writeFile(wb, "rekap-nilai.xlsx");
+  }
+
+  function renderTabel() {
+    const tbody = document.getElementById("tabel-siswa");
+    const filterKelas = document.getElementById("filterKelas").value;
+    const filterBulan = document.getElementById("filterBulan").value;
+    tbody.innerHTML = "";
+
+    const kelasUnik = [...new Set(siswa.map(s => s.kelas))];
+    const bulanUnik = [...new Set(siswa.map(s => s.bulan))];
+
+    document.getElementById("filterKelas").innerHTML = '<option value="">Semua Kelas</option>' +
+      kelasUnik.map(k => `<option value="${k}">${k}</option>`).join("");
+
+    document.getElementById("filterBulan").innerHTML = '<option value="">Semua Bulan</option>' +
+      bulanUnik.map(b => `<option value="${b}">${b}</option>`).join("");
+
+    siswa
+      .filter(s => (!filterKelas || s.kelas === filterKelas) && (!filterBulan || s.bulan === filterBulan))
+      .forEach((s, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${i + 1}</td>
+          <td>${s.nama}</td>
+          <td>${s.kelas}</td>
+          <td>${s.bulan}</td>
+          <td><input type="text" value="${s.kehadiran}" onchange="ubah(${i}, 'kehadiran', this.value)"></td>
+          <td><input type="text" value="${s.harian}" onchange="ubah(${i}, 'harian', this.value)"></td>
+          <td><input type="text" value="${s.formatif}" onchange="ubah(${i}, 'formatif', this.value)"></td>
+          <td><input type="text" value="${s.sts}" onchange="ubah(${i}, 'sts', this.value)"></td>
+          <td><input type="text" value="${s.sas}" onchange="ubah(${i}, 'sas', this.value)"></td>
+          <td><input type="text" value="${s.catatan}" onchange="ubah(${i}, 'catatan', this.value)"></td>
+        `;
+        tbody.appendChild(tr);
+      });
+  }
+
+  function loadApp() {
+    document.getElementById("login-box").style.display = "none";
+    document.getElementById("main-content").style.display = "block";
+    renderTabel();
+  }
+
+  if (localStorage.getItem("isLogin") === "true") {
+    loadApp();
+  } else {
+    document.getElementById("login-box").style.display = "block";
+  }
+</script>
+
 </body>
 </html>
