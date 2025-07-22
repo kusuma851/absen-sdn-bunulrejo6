@@ -1,80 +1,259 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Absensi & Nilai Siswa</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f6f7;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    .center {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #e9ecef;
+    }
+    input[type="text"], select, input[type="password"] {
+      padding: 5px;
+      width: 120px;
+    }
+    .btn {
+      margin: 5px;
+      padding: 10px 15px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #0056b3;
+    }
+    #login-box {
+      max-width: 300px;
+      margin: 100px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 6px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+  </style>
 </head>
-<body class="p-4">
-  <div id="login-box" style="display:none;">
-    <h2>Login Guru</h2>
-    <input id="username" placeholder="Username" class="form-control mb-2">
-    <input id="password" type="password" placeholder="Password" class="form-control mb-2">
-    <button onclick="login()" class="btn btn-primary">Login</button>
+<body>
+
+<div id="login-box" style="display: none;">
+  <h2>Login Guru</h2>
+  <input type="text" id="username" placeholder="Username"><br><br>
+  <input type="password" id="password" placeholder="Password"><br><br>
+  <button class="btn" onclick="login()">Login</button>
+</div>
+
+<div id="main-content" style="display: none;">
+  <h1>Rekap Kehadiran & Nilai Siswa</h1>
+
+  <div class="center">
+    <input type="text" id="namaInput" placeholder="Nama siswa">
+    <input type="text" id="kelasInput" placeholder="Kelas (misal 5A)">
+    <select id="bulanInput">
+      <option value="">Bulan</option>
+      <option>Januari</option><option>Februari</option><option>Maret</option>
+      <option>April</option><option>Mei</option><option>Juni</option>
+      <option>Juli</option><option>Agustus</option><option>September</option>
+      <option>Oktober</option><option>November</option><option>Desember</option>
+    </select>
+    <button class="btn" onclick="tambahSiswa()">Tambah Siswa</button>
   </div>
 
-  <div id="main-content" style="display:none;">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h2>Dashboard</h2>
-      <div>
-        <button onclick="logout()" class="btn btn-outline-secondary">Logout</button>
-        <button onclick="gantiPassword()" class="btn btn-outline-warning">Ganti Password</button>
-      </div>
-    </div>
+  <div class="center">
+    Filter Kelas:
+    <select id="filterKelas" onchange="renderTabel()"></select>
 
-    <div class="row g-2 mb-3">
-      <div class="col"><input id="namaInput" placeholder="Nama" class="form-control"></div>
-      <div class="col"><input id="kelasInput" placeholder="Kelas" class="form-control"></div>
-      <div class="col"><input id="bulanInput" placeholder="Bulan" class="form-control"></div>
-      <div class="col-auto"><button onclick="tambahSiswa()" class="btn btn-success">Tambah</button></div>
-    </div>
-
-    <div class="row g-2 mb-3">
-      <div class="col">
-        <select id="filterKelas" class="form-select" onchange="renderTabel()"></select>
-      </div>
-      <div class="col">
-        <select id="filterBulan" class="form-select" onchange="renderTabel()"></select>
-      </div>
-      <div class="col-auto">
-        <button onclick="simpan()" class="btn btn-primary">Simpan</button>
-        <button onclick="exportCSV()" class="btn btn-outline-info">Ekspor Per Kelas</button>
-      </div>
-    </div>
-
-    <div id="rekapBox" class="mb-3"></div>
-
-    <div class="table-responsive">
-      <table class="table table-bordered table-sm align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>No</th><th>Nama</th><th>Kelas</th><th>Bulan</th><th>Kehadiran</th>
-            <th>Harian</th><th>Formatif 1</th><th>Formatif 2</th><th>Formatif 3</th><th>Formatif 4</th><th>Formatif 5</th>
-            <th>Rata</th><th>STS</th><th>SAS</th><th>Catatan</th><th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="tabel-siswa"></tbody>
-      </table>
-    </div>
+    Filter Bulan:
+    <select id="filterBulan" onchange="renderTabel()"></select>
   </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Nama</th>
+        <th>Kelas</th>
+        <th>Bulan</th>
+        <th>Kehadiran</th>
+        <th>Harian</th>
+        <th>Formatif</th>
+        <th>STS</th>
+        <th>SAS</th>
+        <th>Catatan Guru</th>
+      </tr>
+    </thead>
+    <tbody id="tabel-siswa"></tbody>
+  </table>
+
+  <div class="center">
+    <button class="btn" onclick="simpan()">💾 Simpan</button>
+    <button class="btn" onclick="window.print()">🖨️ Cetak</button>
+    <button class="btn" onclick="exportExcel()">📁 Ekspor Excel</button>
+    <button class="btn" onclick="gantiPassword()">🔑 Ganti Password</button>
+    <button class="btn" onclick="logout()">🔒 Logout</button>
+  </div>
+</div>
 
 <script>
+  let defaultUser = "guru";
+  let defaultPass = "12345";
 
-function exportCSV() {
-  let csv = 'Nama,Kelas,Bulan,Kehadiran,Harian,Formatif1,Formatif2,Formatif3,Formatif4,Formatif5,STS,SAS,Catatan\n';
-  const filterKelas = document.getElementById('filterKelas').value;
-  const filterBulan = document.getElementById('filterBulan').value;
-  siswa.forEach(s => {
-    if ((filterKelas && s.kelas !== filterKelas) || (filterBulan && s.bulan !== filterBulan)) return;
-    csv += [s.nama, s.kelas, s.bulan, s.kehadiran, s.harian, s.formatif1, s.formatif2, s.formatif3, s.formatif4, s.formatif5, s.sts, s.sas, s.catatan].join(',') + '\n';
-  });
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'rekap_kelas.csv';
-  a.click();
-}
+  if (!localStorage.getItem("guruPass")) {
+    localStorage.setItem("guruPass", defaultPass);
+  }
+
+  function login() {
+    const user = document.getElementById("username").value;
+    const pass = document.getElementById("password").value;
+    const savedPass = localStorage.getItem("guruPass");
+
+    if (user === defaultUser && pass === savedPass) {
+      localStorage.setItem("isLogin", "true");
+      loadApp();
+    } else {
+      alert("Login gagal! Username/password salah.");
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem("isLogin");
+    location.reload();
+  }
+
+  function gantiPassword() {
+    const lama = prompt("Masukkan password lama:");
+    const baru = prompt("Masukkan password baru:");
+    const saved = localStorage.getItem("guruPass");
+
+    if (lama === saved) {
+      localStorage.setItem("guruPass", baru);
+      alert("Password berhasil diganti!");
+    } else {
+      alert("Password lama salah!");
+    }
+  }
+
+  let siswa = JSON.parse(localStorage.getItem("dataSiswa")) || [];
+
+  function tambahSiswa() {
+    const nama = document.getElementById("namaInput").value.trim();
+    const kelas = document.getElementById("kelasInput").value.trim();
+    const bulan = document.getElementById("bulanInput").value;
+    if (!nama || !kelas || !bulan) {
+      alert("Isi semua kolom!");
+      return;
+    }
+    siswa.push({ nama, kelas, bulan, kehadiran: "H", harian: "", formatif: "", sts: "", sas: "", catatan: "" });
+    simpan();
+    renderTabel();
+    document.getElementById("namaInput").value = "";
+  }
+
+  function ubah(i, kolom, val) {
+    siswa[i][kolom] = val;
+  }
+
+  function simpan() {
+    localStorage.setItem("dataSiswa", JSON.stringify(siswa));
+    alert("Data disimpan.");
+  }
+
+  function exportExcel() {
+    const data = siswa.map((s, i) => ({
+      No: i + 1,
+      Nama: s.nama,
+      Kelas: s.kelas,
+      Bulan: s.bulan,
+      Kehadiran: s.kehadiran,
+      Harian: s.harian,
+      Formatif: s.formatif,
+      STS: s.sts,
+      SAS: s.sas,
+      Catatan: s.catatan
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Rekap Nilai");
+    XLSX.writeFile(wb, "rekap-nilai.xlsx");
+  }
+
+  function renderTabel() {
+    const tbody = document.getElementById("tabel-siswa");
+    const filterKelas = document.getElementById("filterKelas").value;
+    const filterBulan = document.getElementById("filterBulan").value;
+    tbody.innerHTML = "";
+
+    const kelasUnik = [...new Set(siswa.map(s => s.kelas))];
+    const bulanUnik = [...new Set(siswa.map(s => s.bulan))];
+
+    document.getElementById("filterKelas").innerHTML = '<option value="">Semua Kelas</option>' +
+      kelasUnik.map(k => `<option value="${k}">${k}</option>`).join("");
+
+    document.getElementById("filterBulan").innerHTML = '<option value="">Semua Bulan</option>' +
+      bulanUnik.map(b => `<option value="${b}">${b}</option>`).join("");
+
+    siswa
+      .filter(s => (!filterKelas || s.kelas === filterKelas) && (!filterBulan || s.bulan === filterBulan))
+      .forEach((s, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${i + 1}</td>
+          <td>${s.nama}</td>
+          <td>${s.kelas}</td>
+          <td>${s.bulan}</td>
+          <td>
+            <select onchange="ubah(${i}, 'kehadiran', this.value)">
+              <option ${s.kehadiran === 'H' ? 'selected' : ''}>H</option>
+              <option ${s.kehadiran === 'I' ? 'selected' : ''}>I</option>
+              <option ${s.kehadiran === 'S' ? 'selected' : ''}>S</option>
+              <option ${s.kehadiran === 'A' ? 'selected' : ''}>A</option>
+            </select>
+          </td>
+          <td><input type="text" value="${s.harian}" onchange="ubah(${i}, 'harian', this.value)"></td>
+          <td><input type="text" value="${s.formatif}" onchange="ubah(${i}, 'formatif', this.value)"></td>
+          <td><input type="text" value="${s.sts}" onchange="ubah(${i}, 'sts', this.value)"></td>
+          <td><input type="text" value="${s.sas}" onchange="ubah(${i}, 'sas', this.value)"></td>
+          <td><input type="text" value="${s.catatan}" onchange="ubah(${i}, 'catatan', this.value)"></td>
+        `;
+        tbody.appendChild(tr);
+      });
+  }
+
+  function loadApp() {
+    document.getElementById("login-box").style.display = "none";
+    document.getElementById("main-content").style.display = "block";
+    renderTabel();
+  }
+
+  if (localStorage.getItem("isLogin") === "true") {
+    loadApp();
+  } else {
+    document.getElementById("login-box").style.display = "block";
+  }
 </script>
+
 </body>
 </html>
