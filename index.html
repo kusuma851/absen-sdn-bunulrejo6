@@ -1,5 +1,137 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-...
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Absen & Nilai SDN BUNULREJO 6</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script>
+    const siswa = [
+      { nama: "Aqila Putri Aprilia", nipd: 1566 },
+      { nama: "AQILA PUTRI AZARAH", nipd: 1567 },
+      { nama: "AQUINA KAYYISA ELMA MAZEA ALFARISI", nipd: 1568 },
+      { nama: "ARSYANDI IRGA PRAMULYA", nipd: 1569 },
+      { nama: "ATIKA ZAHRA RATIFA ALYA", nipd: 1570 },
+      { nama: "AZRIL RIZKY ADITYA", nipd: 1571 },
+      { nama: "CECILIA KEYZA ANATASYA", nipd: 1573 },
+      { nama: "CINTA RAHMAWATI", nipd: 1574 },
+      { nama: "DEFA INDRA PURWAKA", nipd: 1576 },
+      { nama: "Dimas Arya Putra Perdana", nipd: 1577 },
+      { nama: "HAFIZA KHAIRA LUBNA", nipd: 1581 },
+      { nama: "ILYANSYAH RIFQI ALDEBARAN", nipd: 1582 },
+      { nama: "KHAIRUNNISA SALSABILA", nipd: 1583 },
+      { nama: "Khansa Naura Azizah", nipd: 1584 },
+      { nama: "M. REYZA KURNIAWAN", nipd: 1585 },
+      { nama: "MARSYAH FARADILA ISLAMI", nipd: 1586 },
+      { nama: "RAMDHAN SATRIYO WICAKSONO", nipd: 1592 },
+      { nama: "Rayhan Zafran Al Gibran", nipd: 1593 },
+      { nama: "SAKTA MAULANA AL-MAGRIBI", nipd: 1596 },
+      { nama: "SANDYTAMA RIZKY TRI HASANANTA", nipd: 1728 },
+      { nama: "SATYA MAULANA AL-MALIKI", nipd: 1599 },
+      { nama: "ZIVANNA QATYA SYAFIRA", nipd: 1603 },
+    ];
+
+    function isiHadirSemua() {
+      document.querySelectorAll('select').forEach(select => select.value = 'Hadir');
+    }
+
+    function loginGuru(event) {
+      event.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      if (username === 'guru' && password === '1234') {
+        document.getElementById('loginPage').classList.add('hidden');
+        document.getElementById('mainPage').classList.remove('hidden');
+      } else {
+        alert('Login gagal! Username atau password salah.');
+      }
+    }
+
+    function logoutGuru() {
+      document.getElementById('mainPage').classList.add('hidden');
+      document.getElementById('loginPage').classList.remove('hidden');
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+    }
+
+    window.onload = () => {
+      const grid = document.getElementById('gridSiswa');
+      siswa.forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'p-4 border rounded-lg shadow bg-white';
+        div.innerHTML = `
+          <p class="font-bold">${s.nama}</p>
+          <p class="text-sm text-gray-600">NIPD: ${s.nipd}</p>
+          <select class="mt-2 w-full border rounded">
+            <option value="Hadir">Hadir</option>
+            <option value="Izin">Izin</option>
+            <option value="Sakit">Sakit</option>
+          </select>
+        `;
+        grid.appendChild(div);
+      });
+
+      document.getElementById("tanggal").textContent = new Date().toLocaleDateString("id-ID");
+    }
+  </script>
+</head>
+<body class="bg-gray-100 font-sans">
+  <!-- Halaman Login -->
+  <div id="loginPage" class="min-h-screen flex items-center justify-center">
+    <form onsubmit="loginGuru(event)" class="bg-white p-8 rounded shadow-md w-full max-w-sm">
+      <h2 class="text-xl font-bold mb-4 text-center">Login Guru</h2>
+      <input id="username" type="text" placeholder="Username" class="mb-3 w-full px-3 py-2 border rounded" required>
+      <input id="password" type="password" placeholder="Password" class="mb-4 w-full px-3 py-2 border rounded" required>
+      <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">Login</button>
+    </form>
+  </div>
+
+  <!-- Halaman Utama -->
+  <div id="mainPage" class="hidden max-w-6xl mx-auto p-6">
+    <!-- Header dan Logout -->
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h1 class="text-2xl font-bold">SDN BUNULREJO 6 Kota Malang</h1>
+        <p class="text-gray-700">Absen Harian & Daftar Nilai Interaktif</p>
+        <p class="text-sm text-gray-500">Tanggal: <span id="tanggal"></span></p>
+      </div>
+      <button onclick="logoutGuru()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Logout</button>
+    </div>
+
+    <!-- Tombol Hadir Semua -->
+    <div class="bg-white p-4 rounded-lg shadow mb-6">
+      <button onclick="isiHadirSemua()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Hadir Semua</button>
+    </div>
+
+    <!-- Grid Siswa -->
+    <div id="gridSiswa" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+    <!-- Halaman 2 -->
+    <div class="mt-10 bg-white p-6 rounded-lg shadow">
+      <h2 class="text-xl font-bold mb-4">Rekapan Kehadiran & Nilai</h2>
+      <table class="table-auto w-full text-left border">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="border px-4 py-2">Nama</th>
+            <th class="border px-4 py-2">Harian</th>
+            <th class="border px-4 py-2">Formatif</th>
+            <th class="border px-4 py-2">STS</th>
+            <th class="border px-4 py-2">SAS</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${[...Array(22)].map((_, i) => `
+          <tr>
+            <td class="border px-4 py-2">${siswa[i]?.nama || ''}</td>
+            <td class="border px-4 py-2"><input type="number" class="w-full border rounded p-1" /></td>
+            <td class="border px-4 py-2"><input type="number" class="w-full border rounded p-1" /></td>
+            <td class="border px-4 py-2"><input type="number" class="w-full border rounded p-1" /></td>
+            <td class="border px-4 py-2"><input type="number" class="w-full border rounded p-1" /></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <button onclick="window.print()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Cetak</button>
+    </div>
+  </div>
+</body>
 </html>
