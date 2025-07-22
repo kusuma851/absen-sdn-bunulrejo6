@@ -1,122 +1,80 @@
-<!-- Full HTML including JavaScript already added above; additional scripts will now follow -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Absensi & Nilai Siswa</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+</head>
+<body class="p-4">
+  <div id="login-box" style="display:none;">
+    <h2>Login Guru</h2>
+    <input id="username" placeholder="Username" class="form-control mb-2">
+    <input id="password" type="password" placeholder="Password" class="form-control mb-2">
+    <button onclick="login()" class="btn btn-primary">Login</button>
+  </div>
+
+  <div id="main-content" style="display:none;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2>Dashboard</h2>
+      <div>
+        <button onclick="logout()" class="btn btn-outline-secondary">Logout</button>
+        <button onclick="gantiPassword()" class="btn btn-outline-warning">Ganti Password</button>
+      </div>
+    </div>
+
+    <div class="row g-2 mb-3">
+      <div class="col"><input id="namaInput" placeholder="Nama" class="form-control"></div>
+      <div class="col"><input id="kelasInput" placeholder="Kelas" class="form-control"></div>
+      <div class="col"><input id="bulanInput" placeholder="Bulan" class="form-control"></div>
+      <div class="col-auto"><button onclick="tambahSiswa()" class="btn btn-success">Tambah</button></div>
+    </div>
+
+    <div class="row g-2 mb-3">
+      <div class="col">
+        <select id="filterKelas" class="form-select" onchange="renderTabel()"></select>
+      </div>
+      <div class="col">
+        <select id="filterBulan" class="form-select" onchange="renderTabel()"></select>
+      </div>
+      <div class="col-auto">
+        <button onclick="simpan()" class="btn btn-primary">Simpan</button>
+        <button onclick="exportCSV()" class="btn btn-outline-info">Ekspor Per Kelas</button>
+      </div>
+    </div>
+
+    <div id="rekapBox" class="mb-3"></div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-sm align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>No</th><th>Nama</th><th>Kelas</th><th>Bulan</th><th>Kehadiran</th>
+            <th>Harian</th><th>Formatif 1</th><th>Formatif 2</th><th>Formatif 3</th><th>Formatif 4</th><th>Formatif 5</th>
+            <th>Rata</th><th>STS</th><th>SAS</th><th>Catatan</th><th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tabel-siswa"></tbody>
+      </table>
+    </div>
+  </div>
+
 <script>
-let siswa = JSON.parse(localStorage.getItem("dataSiswa") || "[]");
-let currentPassword = localStorage.getItem("guruPass") || "admin";
 
-function login() {
-  const u = document.getElementById("username").value;
-  const p = document.getElementById("password").value;
-  if (u === "guru" && p === currentPassword) {
-    document.getElementById("login-box").style.display = "none";
-    document.getElementById("main-content").style.display = "block";
-    renderTabel();
-  } else {
-    alert("Login gagal!");
-  }
-}
-
-function logout() {
-  document.getElementById("main-content").style.display = "none";
-  document.getElementById("login-box").style.display = "block";
-}
-
-function simpan() {
-  localStorage.setItem("dataSiswa", JSON.stringify(siswa));
-  alert("Data tersimpan.");
-}
-
-function tambahSiswa() {
-  const nama = document.getElementById("namaInput").value;
-  const kelas = document.getElementById("kelasInput").value;
-  const bulan = document.getElementById("bulanInput").value;
-  if (!nama || !kelas || !bulan) return alert("Isi semua kolom!");
-  siswa.push({ nama, kelas, bulan, kehadiran: "Hadir", harian: "", formatif1: "", formatif2: "", formatif3: "", formatif4: "", formatif5: "", sts: "", sas: "", catatan: "" });
-  document.getElementById("namaInput").value = "";
-  renderTabel();
-}
-
-function hitungRata(s) {
-  const f = [s.formatif1, s.formatif2, s.formatif3, s.formatif4, s.formatif5].map(n => parseFloat(n) || 0);
-  return (f.reduce((a,b) => a+b, 0)/5).toFixed(1);
-}
-
-function renderTabel() {
-  const tbody = document.getElementById("tabel-siswa");
-  tbody.innerHTML = "";
-  const filterKelas = document.getElementById("filterKelas").value;
-  const filterBulan = document.getElementById("filterBulan").value;
-  let kelasSet = new Set(), bulanSet = new Set();
-
-  siswa.forEach((s, i) => {
-    kelasSet.add(s.kelas);
-    bulanSet.add(s.bulan);
+function exportCSV() {
+  let csv = 'Nama,Kelas,Bulan,Kehadiran,Harian,Formatif1,Formatif2,Formatif3,Formatif4,Formatif5,STS,SAS,Catatan\n';
+  const filterKelas = document.getElementById('filterKelas').value;
+  const filterBulan = document.getElementById('filterBulan').value;
+  siswa.forEach(s => {
     if ((filterKelas && s.kelas !== filterKelas) || (filterBulan && s.bulan !== filterBulan)) return;
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${i+1}</td>
-      <td contenteditable oninput="siswa[${i}].nama=this.innerText">${s.nama}</td>
-      <td contenteditable oninput="siswa[${i}].kelas=this.innerText">${s.kelas}</td>
-      <td>${s.bulan}</td>
-      <td>
-        <select onchange="siswa[${i}].kehadiran=this.value">${["Hadir","Izin","Sakit","Alpa"].map(opt => `<option ${s.kehadiran===opt?'selected':''}>${opt}</option>`)}</select>
-      </td>
-      <td><input type="number" value="${s.harian}" onchange="siswa[${i}].harian=this.value"></td>
-      <td><input type="number" value="${s.formatif1}" onchange="siswa[${i}].formatif1=this.value"></td>
-      <td><input type="number" value="${s.formatif2}" onchange="siswa[${i}].formatif2=this.value"></td>
-      <td><input type="number" value="${s.formatif3}" onchange="siswa[${i}].formatif3=this.value"></td>
-      <td><input type="number" value="${s.formatif4}" onchange="siswa[${i}].formatif4=this.value"></td>
-      <td><input type="number" value="${s.formatif5}" onchange="siswa[${i}].formatif5=this.value"></td>
-      <td>${hitungRata(s)}</td>
-      <td><input type="number" value="${s.sts}" onchange="siswa[${i}].sts=this.value"></td>
-      <td><input type="number" value="${s.sas}" onchange="siswa[${i}].sas=this.value"></td>
-      <td><input type="text" value="${s.catatan}" onchange="siswa[${i}].catatan=this.value"></td>
-      <td><button class="btn btn-danger" onclick="hapus(${i})">Hapus</button></td>
-    `;
-    tbody.appendChild(tr);
+    csv += [s.nama, s.kelas, s.bulan, s.kehadiran, s.harian, s.formatif1, s.formatif2, s.formatif3, s.formatif4, s.formatif5, s.sts, s.sas, s.catatan].join(',') + '\n';
   });
-
-  const filterKelasSel = document.getElementById("filterKelas");
-  filterKelasSel.innerHTML = "<option value=''>Semua</option>" + [...kelasSet].map(k => `<option ${filterKelas===k?'selected':''}>${k}</option>`).join("");
-  document.getElementById("filterBulan").innerHTML = "<option value=''>Semua</option>" + [...bulanSet].map(b => `<option ${filterBulan===b?'selected':''}>${b}</option>`).join("");
-
-  renderRekap();
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'rekap_kelas.csv';
+  a.click();
 }
-
-function hapus(i) {
-  if (confirm("Hapus data ini?")) {
-    siswa.splice(i, 1);
-    renderTabel();
-  }
-}
-
-function gantiPassword() {
-  const baru = prompt("Masukkan password baru:");
-  if (baru) {
-    localStorage.setItem("guruPass", baru);
-    currentPassword = baru;
-    alert("Password diperbarui.");
-  }
-}
-
-function renderRekap() {
-  const bulan = document.getElementById("filterBulan").value;
-  const rekapBox = document.getElementById("rekapBox");
-  if (!bulan) return rekapBox.innerHTML = "";
-  const total = siswa.filter(s => s.bulan === bulan);
-  const hadir = total.filter(s => s.kehadiran === "Hadir").length;
-  const izin = total.filter(s => s.kehadiran === "Izin").length;
-  const sakit = total.filter(s => s.kehadiran === "Sakit").length;
-  const alpa = total.filter(s => s.kehadiran === "Alpa").length;
-  rekapBox.innerHTML = `
-    <h3>Rekap Bulan ${bulan}</h3>
-    <p>Jumlah data: ${total.length}</p>
-    <p>Hadir: ${hadir}, Izin: ${izin}, Sakit: ${sakit}, Alpa: ${alpa}</p>
-  `;
-}
-
-// Auto show login
-window.onload = () => {
-  document.getElementById("login-box").style.display = "block";
-};
 </script>
+</body>
+</html>
