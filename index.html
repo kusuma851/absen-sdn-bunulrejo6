@@ -2,50 +2,52 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Absensi & Nilai Siswa</title>
+  <title>Dashboard Absensi & Nilai</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background: #f4f6f7;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f8f9fa;
+      padding: 20px;
+      color: #333;
     }
     h1, h2 {
       text-align: center;
+      margin-bottom: 10px;
     }
-    .center {
+    .center, .controls {
       text-align: center;
-      margin-bottom: 20px;
+      margin: 20px 0;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      background: #fff;
-      margin-top: 10px;
+      background-color: #fff;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
     th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
+      padding: 10px;
+      border: 1px solid #dee2e6;
       text-align: center;
     }
     th {
       background-color: #e9ecef;
     }
-    input[type="text"], select, input[type="password"] {
-      padding: 5px;
-      width: 120px;
+    input, select {
+      padding: 6px;
+      margin: 2px;
     }
     .btn {
-      margin: 5px;
-      padding: 10px 15px;
-      border: none;
-      background-color: #007bff;
+      background: #007bff;
       color: white;
-      border-radius: 4px;
+      border: none;
+      padding: 10px 15px;
+      margin: 5px;
       cursor: pointer;
+      border-radius: 4px;
     }
     .btn:hover {
-      background-color: #0056b3;
+      background: #0056b3;
     }
     #login-box {
       max-width: 300px;
@@ -55,10 +57,17 @@
       border-radius: 6px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
+    #rekapBox {
+      margin-top: 30px;
+      text-align: left;
+      background: #ffffff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
   </style>
 </head>
 <body>
-
 <div id="login-box" style="display: none;">
   <h2>Login Guru</h2>
   <input type="text" id="username" placeholder="Username"><br><br>
@@ -67,11 +76,10 @@
 </div>
 
 <div id="main-content" style="display: none;">
-  <h1>Rekap Kehadiran & Nilai Siswa</h1>
-
-  <div class="center">
+  <h1>Absensi & Nilai Siswa</h1>
+  <div class="controls">
     <input type="text" id="namaInput" placeholder="Nama siswa">
-    <input type="text" id="kelasInput" placeholder="Kelas (misal 5A)">
+    <input type="text" id="kelasInput" placeholder="Kelas">
     <select id="bulanInput">
       <option value="">Bulan</option>
       <option>Januari</option><option>Februari</option><option>Maret</option>
@@ -82,10 +90,9 @@
     <button class="btn" onclick="tambahSiswa()">Tambah Siswa</button>
   </div>
 
-  <div class="center">
+  <div class="controls">
     Filter Kelas:
     <select id="filterKelas" onchange="renderTabel()"></select>
-
     Filter Bulan:
     <select id="filterBulan" onchange="renderTabel()"></select>
   </div>
@@ -99,14 +106,17 @@
         <th>Bulan</th>
         <th>Kehadiran</th>
         <th>Harian</th>
-        <th>Formatif</th>
+        <th>F1</th><th>F2</th><th>F3</th><th>F4</th><th>F5</th>
+        <th>Rata F</th>
         <th>STS</th>
         <th>SAS</th>
-        <th>Catatan Guru</th>
+        <th>Catatan</th>
       </tr>
     </thead>
     <tbody id="tabel-siswa"></tbody>
   </table>
+
+  <div id="rekapBox"></div>
 
   <div class="center">
     <button class="btn" onclick="simpan()">💾 Simpan</button>
@@ -120,21 +130,19 @@
 <script>
   let defaultUser = "guru";
   let defaultPass = "12345";
+  if (!localStorage.getItem("guruPass")) localStorage.setItem("guruPass", defaultPass);
 
-  if (!localStorage.getItem("guruPass")) {
-    localStorage.setItem("guruPass", defaultPass);
-  }
+  let siswa = JSON.parse(localStorage.getItem("dataSiswa")) || [];
 
   function login() {
     const user = document.getElementById("username").value;
     const pass = document.getElementById("password").value;
     const savedPass = localStorage.getItem("guruPass");
-
     if (user === defaultUser && pass === savedPass) {
       localStorage.setItem("isLogin", "true");
       loadApp();
     } else {
-      alert("Login gagal! Username/password salah.");
+      alert("Login gagal!");
     }
   }
 
@@ -144,29 +152,21 @@
   }
 
   function gantiPassword() {
-    const lama = prompt("Masukkan password lama:");
-    const baru = prompt("Masukkan password baru:");
-    const saved = localStorage.getItem("guruPass");
-
-    if (lama === saved) {
+    const lama = prompt("Password lama:");
+    const baru = prompt("Password baru:");
+    if (lama === localStorage.getItem("guruPass")) {
       localStorage.setItem("guruPass", baru);
-      alert("Password berhasil diganti!");
-    } else {
-      alert("Password lama salah!");
-    }
+      alert("Password diganti!");
+    } else alert("Password lama salah!");
   }
-
-  let siswa = JSON.parse(localStorage.getItem("dataSiswa")) || [];
 
   function tambahSiswa() {
     const nama = document.getElementById("namaInput").value.trim();
     const kelas = document.getElementById("kelasInput").value.trim();
     const bulan = document.getElementById("bulanInput").value;
-    if (!nama || !kelas || !bulan) {
-      alert("Isi semua kolom!");
-      return;
-    }
-    siswa.push({ nama, kelas, bulan, kehadiran: "", harian: "", formatif: "", sts: "", sas: "", catatan: "" });
+    if (!nama || !kelas || !bulan) return alert("Isi semua kolom!");
+    siswa.push({ nama, kelas, bulan, kehadiran: "H", harian: "",
+      formatif1: "", formatif2: "", formatif3: "", formatif4: "", formatif5: "", sts: "", sas: "", catatan: "" });
     simpan();
     renderTabel();
     document.getElementById("namaInput").value = "";
@@ -174,65 +174,82 @@
 
   function ubah(i, kolom, val) {
     siswa[i][kolom] = val;
+    if (["formatif1","formatif2","formatif3","formatif4","formatif5"].includes(kolom)) renderTabel();
   }
 
   function simpan() {
     localStorage.setItem("dataSiswa", JSON.stringify(siswa));
-    alert("Data disimpan.");
+    alert("Disimpan");
   }
 
   function exportExcel() {
-    const data = siswa.map((s, i) => ({
-      No: i + 1,
-      Nama: s.nama,
-      Kelas: s.kelas,
-      Bulan: s.bulan,
-      Kehadiran: s.kehadiran,
-      Harian: s.harian,
-      Formatif: s.formatif,
-      STS: s.sts,
-      SAS: s.sas,
-      Catatan: s.catatan
-    }));
+    const data = siswa.map((s, i) => ({ No: i+1, Nama: s.nama, Kelas: s.kelas, Bulan: s.bulan, Kehadiran: s.kehadiran,
+      Harian: s.harian, F1: s.formatif1, F2: s.formatif2, F3: s.formatif3, F4: s.formatif4, F5: s.formatif5,
+      RataFormatif: hitungRata(s), STS: s.sts, SAS: s.sas, Catatan: s.catatan }));
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Rekap Nilai");
+    XLSX.utils.book_append_sheet(wb, ws, "Nilai");
     XLSX.writeFile(wb, "rekap-nilai.xlsx");
+  }
+
+  function hitungRata(s) {
+    const nilai = [s.formatif1,s.formatif2,s.formatif3,s.formatif4,s.formatif5]
+      .map(n => parseFloat(n)).filter(n => !isNaN(n));
+    if (nilai.length === 0) return "";
+    return (nilai.reduce((a,b)=>a+b,0)/nilai.length).toFixed(2);
   }
 
   function renderTabel() {
     const tbody = document.getElementById("tabel-siswa");
-    const filterKelas = document.getElementById("filterKelas").value;
-    const filterBulan = document.getElementById("filterBulan").value;
+    const fk = document.getElementById("filterKelas").value;
+    const fb = document.getElementById("filterBulan").value;
     tbody.innerHTML = "";
 
     const kelasUnik = [...new Set(siswa.map(s => s.kelas))];
     const bulanUnik = [...new Set(siswa.map(s => s.bulan))];
+    document.getElementById("filterKelas").innerHTML = '<option value="">Semua</option>' + kelasUnik.map(k => `<option>${k}</option>`).join("");
+    document.getElementById("filterBulan").innerHTML = '<option value="">Semua</option>' + bulanUnik.map(b => `<option>${b}</option>`).join("");
 
-    document.getElementById("filterKelas").innerHTML = '<option value="">Semua Kelas</option>' +
-      kelasUnik.map(k => `<option value="${k}">${k}</option>`).join("");
+    let dataTampil = siswa.filter(s => (!fk || s.kelas === fk) && (!fb || s.bulan === fb));
 
-    document.getElementById("filterBulan").innerHTML = '<option value="">Semua Bulan</option>' +
-      bulanUnik.map(b => `<option value="${b}">${b}</option>`).join("");
+    dataTampil.forEach((s, i) => {
+      tbody.innerHTML += `
+      <tr>
+        <td>${i+1}</td>
+        <td>${s.nama}</td>
+        <td>${s.kelas}</td>
+        <td>${s.bulan}</td>
+        <td>
+          <select onchange="ubah(${i}, 'kehadiran', this.value)">
+            <option ${s.kehadiran==='H'?'selected':''}>H</option>
+            <option ${s.kehadiran==='I'?'selected':''}>I</option>
+            <option ${s.kehadiran==='S'?'selected':''}>S</option>
+            <option ${s.kehadiran==='A'?'selected':''}>A</option>
+          </select>
+        </td>
+        <td><input value="${s.harian}" onchange="ubah(${i}, 'harian', this.value)"></td>
+        <td><input value="${s.formatif1}" onchange="ubah(${i}, 'formatif1', this.value)"></td>
+        <td><input value="${s.formatif2}" onchange="ubah(${i}, 'formatif2', this.value)"></td>
+        <td><input value="${s.formatif3}" onchange="ubah(${i}, 'formatif3', this.value)"></td>
+        <td><input value="${s.formatif4}" onchange="ubah(${i}, 'formatif4', this.value)"></td>
+        <td><input value="${s.formatif5}" onchange="ubah(${i}, 'formatif5', this.value)"></td>
+        <td>${hitungRata(s)}</td>
+        <td><input value="${s.sts}" onchange="ubah(${i}, 'sts', this.value)"></td>
+        <td><input value="${s.sas}" onchange="ubah(${i}, 'sas', this.value)"></td>
+        <td><input value="${s.catatan}" onchange="ubah(${i}, 'catatan', this.value)"></td>
+      </tr>`;
+    });
 
-    siswa
-      .filter(s => (!filterKelas || s.kelas === filterKelas) && (!filterBulan || s.bulan === filterBulan))
-      .forEach((s, i) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${i + 1}</td>
-          <td>${s.nama}</td>
-          <td>${s.kelas}</td>
-          <td>${s.bulan}</td>
-          <td><input type="text" value="${s.kehadiran}" onchange="ubah(${i}, 'kehadiran', this.value)"></td>
-          <td><input type="text" value="${s.harian}" onchange="ubah(${i}, 'harian', this.value)"></td>
-          <td><input type="text" value="${s.formatif}" onchange="ubah(${i}, 'formatif', this.value)"></td>
-          <td><input type="text" value="${s.sts}" onchange="ubah(${i}, 'sts', this.value)"></td>
-          <td><input type="text" value="${s.sas}" onchange="ubah(${i}, 'sas', this.value)"></td>
-          <td><input type="text" value="${s.catatan}" onchange="ubah(${i}, 'catatan', this.value)"></td>
-        `;
-        tbody.appendChild(tr);
-      });
+    // Rekap Kehadiran
+    const rekap = { H: 0, I: 0, S: 0, A: 0 };
+    dataTampil.forEach(s => {
+      if (rekap[s.kehadiran] !== undefined) rekap[s.kehadiran]++;
+    });
+    const info = (fk && fb) ? `📌 Rekap Kelas ${fk} - ${fb}:` : "📌 Rekap Kehadiran:";
+    document.getElementById("rekapBox").innerHTML = `
+      <h3>${info}</h3>
+      Hadir: ${rekap.H} | Izin: ${rekap.I} | Sakit: ${rekap.S} | Alpa: ${rekap.A}
+    `;
   }
 
   function loadApp() {
@@ -240,13 +257,8 @@
     document.getElementById("main-content").style.display = "block";
     renderTabel();
   }
-
-  if (localStorage.getItem("isLogin") === "true") {
-    loadApp();
-  } else {
-    document.getElementById("login-box").style.display = "block";
-  }
+  if (localStorage.getItem("isLogin") === "true") loadApp();
+  else document.getElementById("login-box").style.display = "block";
 </script>
-
 </body>
 </html>
