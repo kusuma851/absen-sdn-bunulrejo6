@@ -49,6 +49,12 @@
     .btn:hover {
       background: #0056b3;
     }
+    .btn-danger {
+      background: #dc3545;
+    }
+    .btn-danger:hover {
+      background: #a71d2a;
+    }
     #login-box {
       max-width: 300px;
       margin: 100px auto;
@@ -111,6 +117,7 @@
         <th>STS</th>
         <th>SAS</th>
         <th>Catatan</th>
+        <th>Aksi</th>
       </tr>
     </thead>
     <tbody id="tabel-siswa"></tbody>
@@ -122,143 +129,31 @@
     <button class="btn" onclick="simpan()">💾 Simpan</button>
     <button class="btn" onclick="window.print()">🖨️ Cetak</button>
     <button class="btn" onclick="exportExcel()">📁 Ekspor Excel</button>
+    <button class="btn" onclick="exportExcelPerKelas()">📁 Ekspor Per Kelas</button>
     <button class="btn" onclick="gantiPassword()">🔑 Ganti Password</button>
     <button class="btn" onclick="logout()">🔒 Logout</button>
   </div>
 </div>
 
 <script>
-  let defaultUser = "guru";
-  let defaultPass = "12345";
-  if (!localStorage.getItem("guruPass")) localStorage.setItem("guruPass", defaultPass);
+// Tambahkan fungsi ini untuk ekspor per kelas
+function exportExcelPerKelas() {
+  const kelas = document.getElementById("filterKelas").value;
+  const bulan = document.getElementById("filterBulan").value;
+  let data = siswa.filter(s => (!kelas || s.kelas === kelas) && (!bulan || s.bulan === bulan));
+  if (data.length === 0) return alert("Tidak ada data untuk ekspor.");
 
-  let siswa = JSON.parse(localStorage.getItem("dataSiswa")) || [];
-
-  function login() {
-    const user = document.getElementById("username").value;
-    const pass = document.getElementById("password").value;
-    const savedPass = localStorage.getItem("guruPass");
-    if (user === defaultUser && pass === savedPass) {
-      localStorage.setItem("isLogin", "true");
-      loadApp();
-    } else {
-      alert("Login gagal!");
-    }
-  }
-
-  function logout() {
-    localStorage.removeItem("isLogin");
-    location.reload();
-  }
-
-  function gantiPassword() {
-    const lama = prompt("Password lama:");
-    const baru = prompt("Password baru:");
-    if (lama === localStorage.getItem("guruPass")) {
-      localStorage.setItem("guruPass", baru);
-      alert("Password diganti!");
-    } else alert("Password lama salah!");
-  }
-
-  function tambahSiswa() {
-    const nama = document.getElementById("namaInput").value.trim();
-    const kelas = document.getElementById("kelasInput").value.trim();
-    const bulan = document.getElementById("bulanInput").value;
-    if (!nama || !kelas || !bulan) return alert("Isi semua kolom!");
-    siswa.push({ nama, kelas, bulan, kehadiran: "H", harian: "",
-      formatif1: "", formatif2: "", formatif3: "", formatif4: "", formatif5: "", sts: "", sas: "", catatan: "" });
-    simpan();
-    renderTabel();
-    document.getElementById("namaInput").value = "";
-  }
-
-  function ubah(i, kolom, val) {
-    siswa[i][kolom] = val;
-    if (["formatif1","formatif2","formatif3","formatif4","formatif5"].includes(kolom)) renderTabel();
-  }
-
-  function simpan() {
-    localStorage.setItem("dataSiswa", JSON.stringify(siswa));
-    alert("Disimpan");
-  }
-
-  function exportExcel() {
-    const data = siswa.map((s, i) => ({ No: i+1, Nama: s.nama, Kelas: s.kelas, Bulan: s.bulan, Kehadiran: s.kehadiran,
-      Harian: s.harian, F1: s.formatif1, F2: s.formatif2, F3: s.formatif3, F4: s.formatif4, F5: s.formatif5,
-      RataFormatif: hitungRata(s), STS: s.sts, SAS: s.sas, Catatan: s.catatan }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Nilai");
-    XLSX.writeFile(wb, "rekap-nilai.xlsx");
-  }
-
-  function hitungRata(s) {
-    const nilai = [s.formatif1,s.formatif2,s.formatif3,s.formatif4,s.formatif5]
-      .map(n => parseFloat(n)).filter(n => !isNaN(n));
-    if (nilai.length === 0) return "";
-    return (nilai.reduce((a,b)=>a+b,0)/nilai.length).toFixed(2);
-  }
-
-  function renderTabel() {
-    const tbody = document.getElementById("tabel-siswa");
-    const fk = document.getElementById("filterKelas").value;
-    const fb = document.getElementById("filterBulan").value;
-    tbody.innerHTML = "";
-
-    const kelasUnik = [...new Set(siswa.map(s => s.kelas))];
-    const bulanUnik = [...new Set(siswa.map(s => s.bulan))];
-    document.getElementById("filterKelas").innerHTML = '<option value="">Semua</option>' + kelasUnik.map(k => `<option>${k}</option>`).join("");
-    document.getElementById("filterBulan").innerHTML = '<option value="">Semua</option>' + bulanUnik.map(b => `<option>${b}</option>`).join("");
-
-    let dataTampil = siswa.filter(s => (!fk || s.kelas === fk) && (!fb || s.bulan === fb));
-
-    dataTampil.forEach((s, i) => {
-      tbody.innerHTML += `
-      <tr>
-        <td>${i+1}</td>
-        <td>${s.nama}</td>
-        <td>${s.kelas}</td>
-        <td>${s.bulan}</td>
-        <td>
-          <select onchange="ubah(${i}, 'kehadiran', this.value)">
-            <option ${s.kehadiran==='H'?'selected':''}>H</option>
-            <option ${s.kehadiran==='I'?'selected':''}>I</option>
-            <option ${s.kehadiran==='S'?'selected':''}>S</option>
-            <option ${s.kehadiran==='A'?'selected':''}>A</option>
-          </select>
-        </td>
-        <td><input value="${s.harian}" onchange="ubah(${i}, 'harian', this.value)"></td>
-        <td><input value="${s.formatif1}" onchange="ubah(${i}, 'formatif1', this.value)"></td>
-        <td><input value="${s.formatif2}" onchange="ubah(${i}, 'formatif2', this.value)"></td>
-        <td><input value="${s.formatif3}" onchange="ubah(${i}, 'formatif3', this.value)"></td>
-        <td><input value="${s.formatif4}" onchange="ubah(${i}, 'formatif4', this.value)"></td>
-        <td><input value="${s.formatif5}" onchange="ubah(${i}, 'formatif5', this.value)"></td>
-        <td>${hitungRata(s)}</td>
-        <td><input value="${s.sts}" onchange="ubah(${i}, 'sts', this.value)"></td>
-        <td><input value="${s.sas}" onchange="ubah(${i}, 'sas', this.value)"></td>
-        <td><input value="${s.catatan}" onchange="ubah(${i}, 'catatan', this.value)"></td>
-      </tr>`;
-    });
-
-    // Rekap Kehadiran
-    const rekap = { H: 0, I: 0, S: 0, A: 0 };
-    dataTampil.forEach(s => {
-      if (rekap[s.kehadiran] !== undefined) rekap[s.kehadiran]++;
-    });
-    const info = (fk && fb) ? `📌 Rekap Kelas ${fk} - ${fb}:` : "📌 Rekap Kehadiran:";
-    document.getElementById("rekapBox").innerHTML = `
-      <h3>${info}</h3>
-      Hadir: ${rekap.H} | Izin: ${rekap.I} | Sakit: ${rekap.S} | Alpa: ${rekap.A}
-    `;
-  }
-
-  function loadApp() {
-    document.getElementById("login-box").style.display = "none";
-    document.getElementById("main-content").style.display = "block";
-    renderTabel();
-  }
-  if (localStorage.getItem("isLogin") === "true") loadApp();
-  else document.getElementById("login-box").style.display = "block";
+  const header = ["Nama", "Kelas", "Bulan", "Kehadiran", "Harian", "F1", "F2", "F3", "F4", "F5", "Rata F", "STS", "SAS", "Catatan"];
+  const rows = data.map(s => [
+    s.nama, s.kelas, s.bulan, s.kehadiran, s.harian,
+    s.formatif1, s.formatif2, s.formatif3, s.formatif4, s.formatif5,
+    hitungRata(s), s.sts, s.sas, s.catatan
+  ]);
+  const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Data Kelas");
+  XLSX.writeFile(wb, `Data_Kelas_${kelas || 'Semua'}_${bulan || 'Semua'}.xlsx`);
+}
 </script>
 </body>
 </html>
