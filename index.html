@@ -166,7 +166,7 @@
       alert("Isi semua kolom!");
       return;
     }
-    siswa.push({ nama, kelas, bulan, kehadiran: "H", harian: "", formatif: "", sts: "", sas: "", catatan: "" });
+    siswa.push({ nama, kelas, bulan, kehadiran: "", harian: "", formatif: "", sts: "", sas: "", catatan: "" });
     simpan();
     renderTabel();
     document.getElementById("namaInput").value = "";
@@ -224,14 +224,7 @@
           <td>${s.nama}</td>
           <td>${s.kelas}</td>
           <td>${s.bulan}</td>
-          <td>
-            <select onchange="ubah(${i}, 'kehadiran', this.value)">
-              <option ${s.kehadiran === 'H' ? 'selected' : ''}>H</option>
-              <option ${s.kehadiran === 'I' ? 'selected' : ''}>I</option>
-              <option ${s.kehadiran === 'S' ? 'selected' : ''}>S</option>
-              <option ${s.kehadiran === 'A' ? 'selected' : ''}>A</option>
-            </select>
-          </td>
+          <td><input type="text" value="${s.kehadiran}" onchange="ubah(${i}, 'kehadiran', this.value)"></td>
           <td><input type="text" value="${s.harian}" onchange="ubah(${i}, 'harian', this.value)"></td>
           <td><input type="text" value="${s.formatif}" onchange="ubah(${i}, 'formatif', this.value)"></td>
           <td><input type="text" value="${s.sts}" onchange="ubah(${i}, 'sts', this.value)"></td>
